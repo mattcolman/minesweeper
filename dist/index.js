@@ -12378,16 +12378,82 @@ var Game = (function () {
     this.createBlocks();
     this.blocks = Array.from($('li')); // convert array-like to array
     this.addGrid();
-    this.layMines();
+    this.layBombs();
     this.listenForClick();
   }
 
-  Game.prototype.layMines = function layMines() {
+  Game.prototype.layBombs = function layBombs() {
     var shuffledBlocks = _lodash._.shuffle(this.blocks);
-    var numMines = 10;
-    for (var i = 0; i < numMines; i++) {
-      $(shuffledBlocks[i]).text('💣');
+    var numBombs = 10;
+    for (var i = 0; i < numBombs; i++) {
+      this.placeBomb(shuffledBlocks[i]);
     };
+    this.drawGrid();
+  };
+
+  Game.prototype.drawGrid = function drawGrid() {
+    var data;
+    var str;
+    var x;
+    var y;
+    for (var _iterator = this.blocks, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var block = _ref;
+
+      var _getXY = this.getXY(block);
+
+      x = _getXY[0];
+      y = _getXY[1];
+
+      data = this.data[x][y];
+      if (data.isBomb) {
+        str = 'X';
+      } else {
+        str = data.number;
+      }
+      $(block).text(str);
+    }
+  };
+
+  Game.prototype.placeBomb = function placeBomb(bomb) {
+    var _getXY2 = this.getXY(bomb);
+
+    var x = _getXY2[0];
+    var y = _getXY2[1];
+
+    this.data[x][y].isBomb = true;
+    var blocks = this.grid.getNeighbours(x, y);
+    for (var _iterator2 = blocks, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+      var _ref2;
+
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
+      } else {
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
+      }
+
+      var block = _ref2;
+
+      var _getXY3 = this.getXY(block);
+
+      x = _getXY3[0];
+      y = _getXY3[1];
+
+      this.data[x][y].number++;
+    }
   };
 
   Game.prototype.listenForClick = function listenForClick(cb) {
@@ -12403,8 +12469,11 @@ var Game = (function () {
   };
 
   Game.prototype.createBlocks = function createBlocks() {
+    this.data = [];
     for (var j = 0; j < this.numRows; j++) {
+      this.data.push([]);
       for (var i = 0; i < this.numColumns; i++) {
+        this.data[j].push({ isBomb: false, number: 0 });
         var form = '<li id="' + i + ',' + j + '"></li>';
         form = $(form);
         $('#game').append(form);
@@ -12422,19 +12491,19 @@ var Game = (function () {
       return a.innerHTML == b.innerHTML;
     };
 
-    for (var _iterator = this.blocks, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
+    for (var _iterator3 = this.blocks, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+      var _ref3;
 
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
+      if (_isArray3) {
+        if (_i3 >= _iterator3.length) break;
+        _ref3 = _iterator3[_i3++];
       } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
+        _i3 = _iterator3.next();
+        if (_i3.done) break;
+        _ref3 = _i3.value;
       }
 
-      var li = _ref;
+      var li = _ref3;
 
       var _li$id$split = li.id.split(',');
 
@@ -12456,10 +12525,10 @@ var Game = (function () {
   Game.prototype.placeSymbolInBlock = function placeSymbolInBlock(symbol, block) {
     var a = undefined;
 
-    var _getXY = this.getXY(block);
+    var _getXY4 = this.getXY(block);
 
-    var x = _getXY[0];
-    var y = _getXY[1];
+    var x = _getXY4[0];
+    var y = _getXY4[1];
 
     if (this.gravity) block = this.findNextBlockInColumn(x);
     if (!this.isVacant(block)) return;
@@ -12467,10 +12536,10 @@ var Game = (function () {
     block.className = symbol;
     block.innerHTML = symbol;
 
-    var _getXY2 = this.getXY(block);
+    var _getXY5 = this.getXY(block);
 
-    x = _getXY2[0];
-    y = _getXY2[1];
+    x = _getXY5[0];
+    y = _getXY5[1];
 
     if (this.findMatches(x, y)) return true;
     return false;
@@ -12536,6 +12605,14 @@ var Game = (function () {
 exports.Game = Game;
 
 },{"./grid":3,"lodash":1}],3:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var _lodash = require('lodash');
+
 /**
  * @author Matt Colman
  * This is a generic 2d Grid class.
@@ -12545,12 +12622,6 @@ exports.Game = Game;
  * find consecutive matches from a start point in
  * a directional line.
  */
-
-'use strict';
-
-exports.__esModule = true;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var Grid = (function () {
 
@@ -12604,6 +12675,17 @@ var Grid = (function () {
   Grid.prototype.getItem = function getItem(x, y) {
     if (this.pos[x]) return this.pos[x][y];
     return undefined;
+  };
+
+  Grid.prototype.getNeighbours = function getNeighbours(x, y) {
+    var arr = [this.getItemAtDirection(x, y, 'nw'), this.getItemAtDirection(x, y, 'n'), this.getItemAtDirection(x, y, 'ne'), this.getItemAtDirection(x, y, 'e'), this.getItemAtDirection(x, y, 'se'), this.getItemAtDirection(x, y, 's'), this.getItemAtDirection(x, y, 'sw'), this.getItemAtDirection(x, y, 'w')];
+
+    return _lodash._.compact(arr);
+  };
+
+  Grid.prototype.getItemAtDirection = function getItemAtDirection(x, y, direction) {
+    direction = this._parseDirection(direction);
+    return this.getItem(x + direction[0], y + direction[1]);
   };
 
   /**
@@ -12718,7 +12800,7 @@ var Grid = (function () {
 
 exports.Grid = Grid;
 
-},{}],4:[function(require,module,exports){
+},{"lodash":1}],4:[function(require,module,exports){
 /**
  * @author Matt Colman
  */

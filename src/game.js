@@ -14,16 +14,44 @@ class Game {
     this.createBlocks()
     this.blocks = Array.from($('li')) // convert array-like to array
     this.addGrid()
-    this.layMines()
+    this.layBombs()
     this.listenForClick()
   }
 
-  layMines() {
+  layBombs() {
     var shuffledBlocks = _.shuffle(this.blocks)
-    var numMines = 10
-    for (var i = 0; i < numMines; i++) {
-      $(shuffledBlocks[i]).text('💣')
+    var numBombs = 10
+    for (var i = 0; i < numBombs; i++) {
+      this.placeBomb(shuffledBlocks[i])
     };
+    this.drawGrid()
+  }
+
+  drawGrid() {
+    var data;
+    var str;
+    var x;
+    var y;
+    for (var block of this.blocks) {
+      [x, y] = this.getXY(block)
+      data = this.data[x][y]
+      if (data.isBomb) {
+        str = 'X'
+      } else {
+        str = data.number
+      }
+      $(block).text(str)
+    }
+  }
+
+  placeBomb(bomb) {
+    var [x, y] = this.getXY(bomb)
+    this.data[x][y].isBomb = true
+    let blocks = this.grid.getNeighbours(x, y)
+    for (var block of blocks) {
+      [x, y] = this.getXY(block)
+      this.data[x][y].number++
+    }
   }
 
   listenForClick(cb) {
@@ -39,8 +67,11 @@ class Game {
   }
 
   createBlocks() {
+    this.data = []
     for (var j = 0; j < this.numRows; j++) {
+      this.data.push([])
       for (var i = 0; i < this.numColumns; i++) {
+        this.data[j].push({isBomb: false, number: 0})
         let form = `<li id="${i},${j}"></li>`
         form = $(form)
         $('#game').append(form)

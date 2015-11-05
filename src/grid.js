@@ -1,3 +1,5 @@
+import {_} from 'lodash';
+
 /**
  * @author Matt Colman
  * This is a generic 2d Grid class.
@@ -55,6 +57,27 @@ class Grid {
   getItem(x, y) {
     if (this.pos[x]) return this.pos[x][y]
     return undefined
+  }
+
+  getNeighbours(x, y) {
+    let arr = [
+      this.getItemAtDirection(x, y, 'nw'),
+      this.getItemAtDirection(x, y, 'n' ),
+      this.getItemAtDirection(x, y, 'ne'),
+      this.getItemAtDirection(x, y, 'e' ),
+      this.getItemAtDirection(x, y, 'se'),
+      this.getItemAtDirection(x, y, 's' ),
+      this.getItemAtDirection(x, y, 'sw'),
+      this.getItemAtDirection(x, y, 'w' )
+    ]
+
+    return _.compact(arr)
+
+  }
+
+  getItemAtDirection(x, y, direction) {
+    direction = this._parseDirection(direction)
+    return this.getItem(x + direction[0], y + direction[1])
   }
 
   /**
