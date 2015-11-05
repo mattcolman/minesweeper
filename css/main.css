@@ -1,0 +1,97 @@
+body {
+    margin-top: 20px;
+    background: #222222;
+    color: #fff;
+    font-family: Helvetica;
+    font-weight: bold;
+    text-align:center;
+}
+
+h1 {
+    letter-spacing: 0.1em;
+    color: #f1f1f1
+}
+
+.main {
+    margin: 0 auto;
+}
+
+#game {
+    margin: 0 auto;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+#game > li {
+    list-style: none;
+    float: left;
+    overflow: hidden;
+    text-decoration:none;
+    width: 20px;
+    height: 20px;
+    background: #f1f1f1;
+    border: 1px solid #ccc;
+    border-right: 1px solid #fff;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 4px;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    border-radius: 5px;
+    font-size: 20px;
+    color: black;
+}
+
+#game > li:hover {
+    background: #f9f9f9;
+}
+
+#game > li:active {
+    border: 0;
+}
+
+/* button div */
+#buttons {
+  text-align: center;
+}
+
+/* start da css for da buttons */
+.btn {
+  border-radius: 5px;
+  padding: 15px 25px;
+  font-size: 22px;
+  text-decoration: none;
+  margin: 20px;
+  color: #fff;
+  position: relative;
+  display: inline-block;
+}
+
+.btn:active {
+  transform: translate(0px, 5px);
+  -webkit-transform: translate(0px, 5px);
+  box-shadow: 0px 1px 0px 0px;
+}
+
+.blue {
+  background-color: #55acee;
+  box-shadow: 0px 5px 0px 0px #3C93D5;
+}
+
+.blue:hover {
+  background-color: #6FC6FF;
+}
+
+.green {
+  background-color: #2ecc71;
+  box-shadow: 0px 5px 0px 0px #15B358;
+}
+
+.green:hover {
+  background-color: #48E68B;
+}
+
+a {
+    color: #55acee;
+}
