@@ -11,6 +11,11 @@ class Game {
     this.numRows    = 10
     this.numColumns = 10
 
+    this.symbols = {
+      BOMB: 'X',
+      FLAG: 'Y'
+    }
+
     this.createBlocks()
     this.blocks = Array.from($('li')) // convert array-like to array
     this.addGrid()
@@ -39,49 +44,74 @@ class Game {
   }
 
   handleSingleClick(target) {
+    let data = this.getData(target)
+    if (data.open) return;
     let [x, y] = this.getXY(target)
     console.log('clicked on', x, y)
-    let data = this.data[x][y]
     if (data.isBomb) {
-      console.log("BOMB!!!")
-      $(target).text('X')
+      this.reveal(target)
+      this.handleBombClicked()
     } else if (data.number > 0) {
-      this.reveal(x, y)
+      this.reveal(target)
     } else {
-      this.reveal(x, y)
+      this.reveal(target)
       this.cluster(x, y)
     }
   }
 
+  handleBombClicked() {
+    console.log("OH NO BOMB!!!!!!!!!!!!")
+  }
+
   handleRightClick(target) {
+    let data = this.getData(target)
+    if (!data.open || data.isFlag) {
+      this.toggleFlag(target)
+    }
+  }
+
+  toggleFlag(block) {
     console.log('place flag!!')
+    let data = this.getData(block)
+    data.isFlag = !data.isFlag
+    if (data.isFlag) {
+      $(block).text(this.symbols.FLAG)
+    } else {
+      $(block).text('')
+    }
   }
 
   cluster(x, y) {
     console.log('cluster time!', x, y)
+
+    // look for corners first. The corners will only
+    // reveal if they're empty, NOT if they're numbers.
     var corners = this.getCorners(x, y)
     for (var block of corners) {
       let [x, y] = this.getXY(block)
       let data = this.data[x][y]
       if (data.open == true) continue
       if (data.number == 0) {
-        this.reveal(x, y)
+        this.reveal(block)
         this.cluster(x, y)
       }
     }
 
+    // reveal north, south, east and west. They will be
+    // either empty or a number and we reveal regardless.
     var nesw = this.getNESW(x, y)
     for (var block of nesw) {
       let [x, y] = this.getXY(block)
       let data = this.data[x][y]
       if (data.open == true) continue
-      this.reveal(x, y)
+      this.reveal(block)
       if (data.number == 0) {
         this.cluster(x, y)
       }
     }
   }
 
+  // CUSTOM GRID FUNCTIONS
   getCorners(x, y) {
     let arr = [
       this.grid.getItemAtDirection(x, y, 'nw'),
@@ -102,14 +132,18 @@ class Game {
     return _.compact(arr)
   }
 
-  reveal(x, y) {
-    this.data[x][y].open = true
-    $(this.grid.getItem(x, y)).text(this.data[x][y].number)
+  reveal(block) {
+    let data = this.getData(block)
+    data.open = true
+    if (data.isBomb) {
+      $(block).text(this.symbols.BOMB)
+    } else {
+      $(block).text(data.number)
+    }
   }
 
   getData(block) {
-    let [x, y] = this.getXY(target)
-    console.log('get data', x, y)
+    let [x, y] = this.getXY(block)
     return this.data[x][y]
   }
 
@@ -122,38 +156,31 @@ class Game {
     // this.drawGrid()
   }
 
-  drawGrid() {
-    var data;
-    var str;
-    var x;
-    var y;
-    for (var block of this.blocks) {
-      [x, y] = this.getXY(block)
-      data = this.data[x][y]
-      if (data.isBomb) {
-        str = 'X'
-      } else {
-        str = data.number
-      }
-      $(block).text(str)
-    }
-  }
+  // Draw the whole grid. ***** DEBUG ONLY ******
+  // drawGrid() {
+  //   var data;
+  //   var str;
+  //   var x;
+  //   var y;
+  //   for (var block of this.blocks) {
+  //     [x, y] = this.getXY(block)
+  //     data = this.data[x][y]
+  //     if (data.isBomb) {
+  //       str = 'X'
+  //     } else {
+  //       str = data.number
+  //     }
+  //     $(block).text(str)
+  //   }
+  // }
 
   placeBomb(bomb) {
     var [x, y] = this.getXY(bomb)
     this.data[x][y].isBomb = true
     let blocks = this.grid.getNeighbours(x, y)
-    for (var block of blocks) {
-      [x, y] = this.getXY(block)
-      this.data[x][y].number++
+    for (let block of blocks) {
+      this.getData(block).number++
     }
-  }
-
-  listenForClick(cb) {
-    $('ul').click((e)=> {
-      let target = e.target
-      cb(target)
-    })
   }
 
   destroy() {
@@ -190,79 +217,19 @@ class Game {
     }
   }
 
-  handleClick(symbol, block) {
-    if (this.placeSymbolInBlock(symbol, block)) {
-      this.handleWin()
-    } else {
-      this.handleTurnComplete()
-    }
-  }
-
-  placeSymbolInBlock(symbol, block) {
-    let a
-    let [x, y] = this.getXY(block)
-
-    if (this.gravity) block = this.findNextBlockInColumn(x)
-    if (!this.isVacant(block)) return
-
-    block.className = symbol;
-    block.innerHTML = symbol;
-
-    [x, y] = this.getXY(block);
-    if (this.findMatches(x, y)) return true
-    return false
-  }
-
-  handleTurnComplete() {
-    if (++this.turn >= this.numTurns) {
-      this.gameOver()
-    } else {
-      this.nextTurn()
-    }
-  }
-
   getXY(block) {
     let [x, y] = block.id.split(',')
     return [parseInt(x), parseInt(y)]
   }
 
-  findNextBlockInColumn(x) {
-    let y = -1
-    let block, a
-    while (true) {
-      a = this.grid.getItem(x, y+1)
-      if (this.isVacant(a)) {
-        y++
-        block = a
-      } else {
-        return block
-      }
-    }
-  }
-
-  isVacant(block) {
-    return (block && block.innerHTML == '')
-  }
-
-  findMatches(x, y) {
-    return (this.grid.findMatches(x, y, ['n', 's'], this.numMatches) ||
-            this.grid.findMatches(x, y, ['e', 'w'], this.numMatches) ||
-            this.grid.findMatches(x, y, ['ne', 'sw'], this.numMatches) ||
-            this.grid.findMatches(x, y, ['nw', 'se'], this.numMatches))
-  }
-
   handleWin() {
     $('ul').off()
-    let symbol = this.players[this.turn%2].symbol
-    $('#result')[0].className = symbol
-    $('#result').text(`${symbol.toUpperCase()} WINS!`)
-    // $('#result').show()
+    $('#result').text('You WIN!')
   }
 
-  gameOver() {
+  handleLose() {
     $('ul').off()
-    $('#result').text('DRAW!')
-    // $('#result').show()
+    $('#result').text('You hit a mine!')
   }
 }
 
