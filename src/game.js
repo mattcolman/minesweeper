@@ -15,7 +15,102 @@ class Game {
     this.blocks = Array.from($('li')) // convert array-like to array
     this.addGrid()
     this.layBombs()
-    this.listenForClick()
+
+    // disable the context menu
+    $(document).on("contextmenu", "ul", function(e){
+      return false;
+    });
+
+    $('ul').mousedown((e)=>{
+      switch (e.which) {
+        case 1:
+          this.handleSingleClick(e.target)
+          break;
+        case 2:
+          console.log('Middle Mouse button pressed.');
+          break;
+        case 3:
+          this.handleRightClick(e.target)
+          break;
+        default:
+          console.log('You have a strange Mouse!');
+      }
+    });
+  }
+
+  handleSingleClick(target) {
+    let [x, y] = this.getXY(target)
+    console.log('clicked on', x, y)
+    let data = this.data[x][y]
+    if (data.isBomb) {
+      console.log("BOMB!!!")
+      $(target).text('X')
+    } else if (data.number > 0) {
+      this.reveal(x, y)
+    } else {
+      this.reveal(x, y)
+      this.cluster(x, y)
+    }
+  }
+
+  handleRightClick(target) {
+    console.log('place flag!!')
+  }
+
+  cluster(x, y) {
+    console.log('cluster time!', x, y)
+    var corners = this.getCorners(x, y)
+    for (var block of corners) {
+      let [x, y] = this.getXY(block)
+      let data = this.data[x][y]
+      if (data.open == true) continue
+      if (data.number == 0) {
+        this.reveal(x, y)
+        this.cluster(x, y)
+      }
+    }
+
+    var nesw = this.getNESW(x, y)
+    for (var block of nesw) {
+      let [x, y] = this.getXY(block)
+      let data = this.data[x][y]
+      if (data.open == true) continue
+      this.reveal(x, y)
+      if (data.number == 0) {
+        this.cluster(x, y)
+      }
+    }
+  }
+
+  getCorners(x, y) {
+    let arr = [
+      this.grid.getItemAtDirection(x, y, 'nw'),
+      this.grid.getItemAtDirection(x, y, 'ne'),
+      this.grid.getItemAtDirection(x, y, 'se'),
+      this.grid.getItemAtDirection(x, y, 'sw')
+    ]
+    return _.compact(arr)
+  }
+
+  getNESW(x, y) {
+    let arr = [
+      this.grid.getItemAtDirection(x, y, 'n'),
+      this.grid.getItemAtDirection(x, y, 'e'),
+      this.grid.getItemAtDirection(x, y, 's'),
+      this.grid.getItemAtDirection(x, y, 'w')
+    ]
+    return _.compact(arr)
+  }
+
+  reveal(x, y) {
+    this.data[x][y].open = true
+    $(this.grid.getItem(x, y)).text(this.data[x][y].number)
+  }
+
+  getData(block) {
+    let [x, y] = this.getXY(target)
+    console.log('get data', x, y)
+    return this.data[x][y]
   }
 
   layBombs() {
@@ -24,7 +119,7 @@ class Game {
     for (var i = 0; i < numBombs; i++) {
       this.placeBomb(shuffledBlocks[i])
     };
-    this.drawGrid()
+    // this.drawGrid()
   }
 
   drawGrid() {
@@ -71,7 +166,7 @@ class Game {
     for (var j = 0; j < this.numRows; j++) {
       this.data.push([])
       for (var i = 0; i < this.numColumns; i++) {
-        this.data[j].push({isBomb: false, number: 0})
+        this.data[j].push({isBomb: false, number: 0, open: false})
         let form = `<li id="${i},${j}"></li>`
         form = $(form)
         $('#game').append(form)

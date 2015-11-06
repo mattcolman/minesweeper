@@ -12370,6 +12370,8 @@ var _lodash = require('lodash');
 
 var Game = (function () {
   function Game(config) {
+    var _this = this;
+
     _classCallCheck(this, Game);
 
     this.numRows = 10;
@@ -12379,24 +12381,56 @@ var Game = (function () {
     this.blocks = Array.from($('li')); // convert array-like to array
     this.addGrid();
     this.layBombs();
-    this.listenForClick();
+
+    // disable the context menu
+    $(document).on("contextmenu", "ul", function (e) {
+      return false;
+    });
+
+    $('ul').mousedown(function (e) {
+      switch (e.which) {
+        case 1:
+          _this.handleSingleClick(e.target);
+          break;
+        case 2:
+          console.log('Middle Mouse button pressed.');
+          break;
+        case 3:
+          _this.handleRightClick(e.target);
+          break;
+        default:
+          console.log('You have a strange Mouse!');
+      }
+    });
   }
 
-  Game.prototype.layBombs = function layBombs() {
-    var shuffledBlocks = _lodash._.shuffle(this.blocks);
-    var numBombs = 10;
-    for (var i = 0; i < numBombs; i++) {
-      this.placeBomb(shuffledBlocks[i]);
-    };
-    this.drawGrid();
+  Game.prototype.handleSingleClick = function handleSingleClick(target) {
+    var _getXY = this.getXY(target);
+
+    var x = _getXY[0];
+    var y = _getXY[1];
+
+    console.log('clicked on', x, y);
+    var data = this.data[x][y];
+    if (data.isBomb) {
+      console.log("BOMB!!!");
+      $(target).text('X');
+    } else if (data.number > 0) {
+      this.reveal(x, y);
+    } else {
+      this.reveal(x, y);
+      this.cluster(x, y);
+    }
   };
 
-  Game.prototype.drawGrid = function drawGrid() {
-    var data;
-    var str;
-    var x;
-    var y;
-    for (var _iterator = this.blocks, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+  Game.prototype.handleRightClick = function handleRightClick(target) {
+    console.log('place flag!!');
+  };
+
+  Game.prototype.cluster = function cluster(x, y) {
+    console.log('cluster time!', x, y);
+    var corners = this.getCorners(x, y);
+    for (var _iterator = corners, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
       var _ref;
 
       if (_isArray) {
@@ -12410,30 +12444,21 @@ var Game = (function () {
 
       var block = _ref;
 
-      var _getXY = this.getXY(block);
+      var _getXY2 = this.getXY(block);
 
-      x = _getXY[0];
-      y = _getXY[1];
+      var _x = _getXY2[0];
+      var _y = _getXY2[1];
 
-      data = this.data[x][y];
-      if (data.isBomb) {
-        str = 'X';
-      } else {
-        str = data.number;
+      var data = this.data[_x][_y];
+      if (data.open == true) continue;
+      if (data.number == 0) {
+        this.reveal(_x, _y);
+        this.cluster(_x, _y);
       }
-      $(block).text(str);
     }
-  };
 
-  Game.prototype.placeBomb = function placeBomb(bomb) {
-    var _getXY2 = this.getXY(bomb);
-
-    var x = _getXY2[0];
-    var y = _getXY2[1];
-
-    this.data[x][y].isBomb = true;
-    var blocks = this.grid.getNeighbours(x, y);
-    for (var _iterator2 = blocks, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+    var nesw = this.getNESW(x, y);
+    for (var _iterator2 = nesw, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
       var _ref2;
 
       if (_isArray2) {
@@ -12449,8 +12474,112 @@ var Game = (function () {
 
       var _getXY3 = this.getXY(block);
 
-      x = _getXY3[0];
-      y = _getXY3[1];
+      var _x2 = _getXY3[0];
+      var _y2 = _getXY3[1];
+
+      var data = this.data[_x2][_y2];
+      if (data.open == true) continue;
+      this.reveal(_x2, _y2);
+      if (data.number == 0) {
+        this.cluster(_x2, _y2);
+      }
+    }
+  };
+
+  Game.prototype.getCorners = function getCorners(x, y) {
+    var arr = [this.grid.getItemAtDirection(x, y, 'nw'), this.grid.getItemAtDirection(x, y, 'ne'), this.grid.getItemAtDirection(x, y, 'se'), this.grid.getItemAtDirection(x, y, 'sw')];
+    return _lodash._.compact(arr);
+  };
+
+  Game.prototype.getNESW = function getNESW(x, y) {
+    var arr = [this.grid.getItemAtDirection(x, y, 'n'), this.grid.getItemAtDirection(x, y, 'e'), this.grid.getItemAtDirection(x, y, 's'), this.grid.getItemAtDirection(x, y, 'w')];
+    return _lodash._.compact(arr);
+  };
+
+  Game.prototype.reveal = function reveal(x, y) {
+    this.data[x][y].open = true;
+    $(this.grid.getItem(x, y)).text(this.data[x][y].number);
+  };
+
+  Game.prototype.getData = function getData(block) {
+    var _getXY4 = this.getXY(target);
+
+    var x = _getXY4[0];
+    var y = _getXY4[1];
+
+    console.log('get data', x, y);
+    return this.data[x][y];
+  };
+
+  Game.prototype.layBombs = function layBombs() {
+    var shuffledBlocks = _lodash._.shuffle(this.blocks);
+    var numBombs = 10;
+    for (var i = 0; i < numBombs; i++) {
+      this.placeBomb(shuffledBlocks[i]);
+    };
+    // this.drawGrid()
+  };
+
+  Game.prototype.drawGrid = function drawGrid() {
+    var data;
+    var str;
+    var x;
+    var y;
+    for (var _iterator3 = this.blocks, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+      var _ref3;
+
+      if (_isArray3) {
+        if (_i3 >= _iterator3.length) break;
+        _ref3 = _iterator3[_i3++];
+      } else {
+        _i3 = _iterator3.next();
+        if (_i3.done) break;
+        _ref3 = _i3.value;
+      }
+
+      var block = _ref3;
+
+      var _getXY5 = this.getXY(block);
+
+      x = _getXY5[0];
+      y = _getXY5[1];
+
+      data = this.data[x][y];
+      if (data.isBomb) {
+        str = 'X';
+      } else {
+        str = data.number;
+      }
+      $(block).text(str);
+    }
+  };
+
+  Game.prototype.placeBomb = function placeBomb(bomb) {
+    var _getXY6 = this.getXY(bomb);
+
+    var x = _getXY6[0];
+    var y = _getXY6[1];
+
+    this.data[x][y].isBomb = true;
+    var blocks = this.grid.getNeighbours(x, y);
+    for (var _iterator4 = blocks, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+      var _ref4;
+
+      if (_isArray4) {
+        if (_i4 >= _iterator4.length) break;
+        _ref4 = _iterator4[_i4++];
+      } else {
+        _i4 = _iterator4.next();
+        if (_i4.done) break;
+        _ref4 = _i4.value;
+      }
+
+      var block = _ref4;
+
+      var _getXY7 = this.getXY(block);
+
+      x = _getXY7[0];
+      y = _getXY7[1];
 
       this.data[x][y].number++;
     }
@@ -12473,7 +12602,7 @@ var Game = (function () {
     for (var j = 0; j < this.numRows; j++) {
       this.data.push([]);
       for (var i = 0; i < this.numColumns; i++) {
-        this.data[j].push({ isBomb: false, number: 0 });
+        this.data[j].push({ isBomb: false, number: 0, open: false });
         var form = '<li id="' + i + ',' + j + '"></li>';
         form = $(form);
         $('#game').append(form);
@@ -12491,19 +12620,19 @@ var Game = (function () {
       return a.innerHTML == b.innerHTML;
     };
 
-    for (var _iterator3 = this.blocks, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-      var _ref3;
+    for (var _iterator5 = this.blocks, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+      var _ref5;
 
-      if (_isArray3) {
-        if (_i3 >= _iterator3.length) break;
-        _ref3 = _iterator3[_i3++];
+      if (_isArray5) {
+        if (_i5 >= _iterator5.length) break;
+        _ref5 = _iterator5[_i5++];
       } else {
-        _i3 = _iterator3.next();
-        if (_i3.done) break;
-        _ref3 = _i3.value;
+        _i5 = _iterator5.next();
+        if (_i5.done) break;
+        _ref5 = _i5.value;
       }
 
-      var li = _ref3;
+      var li = _ref5;
 
       var _li$id$split = li.id.split(',');
 
@@ -12525,10 +12654,10 @@ var Game = (function () {
   Game.prototype.placeSymbolInBlock = function placeSymbolInBlock(symbol, block) {
     var a = undefined;
 
-    var _getXY4 = this.getXY(block);
+    var _getXY8 = this.getXY(block);
 
-    var x = _getXY4[0];
-    var y = _getXY4[1];
+    var x = _getXY8[0];
+    var y = _getXY8[1];
 
     if (this.gravity) block = this.findNextBlockInColumn(x);
     if (!this.isVacant(block)) return;
@@ -12536,10 +12665,10 @@ var Game = (function () {
     block.className = symbol;
     block.innerHTML = symbol;
 
-    var _getXY5 = this.getXY(block);
+    var _getXY9 = this.getXY(block);
 
-    x = _getXY5[0];
-    y = _getXY5[1];
+    x = _getXY9[0];
+    y = _getXY9[1];
 
     if (this.findMatches(x, y)) return true;
     return false;
