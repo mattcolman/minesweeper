@@ -4,6 +4,7 @@
 
 import {Grid} from './grid';
 import {_} from 'lodash';
+import {Bootstrap} from 'bootstrap';
 
 class Game {
 
@@ -12,12 +13,15 @@ class Game {
     this.numColumns = 10
 
     this.symbols = {
-      BOMB: 'X',
-      FLAG: 'Y'
+      BOMB: 'glyphicon glyphicon-certificate open',
+      FLAG: 'glyphicon glyphicon-flag open',
+      OPEN: 'open',
+      CLOSED: 'closed',
+      EMPTY: 'empty'
     }
 
     this.createBlocks()
-    this.blocks = Array.from($('li')) // convert array-like to array
+    this.blocks = Array.from($('#game span')) // convert array-like to array
     this.addGrid()
     this.layBombs()
 
@@ -26,7 +30,7 @@ class Game {
       return false;
     });
 
-    $('ul').mousedown((e)=>{
+    $('#game').mousedown((e)=>{
       switch (e.which) {
         case 1:
           this.handleSingleClick(e.target)
@@ -75,9 +79,9 @@ class Game {
     let data = this.getData(block)
     data.isFlag = !data.isFlag
     if (data.isFlag) {
-      $(block).text(this.symbols.FLAG)
+      block.className = this.symbols.FLAG
     } else {
-      $(block).text('')
+      block.className = this.symbols.CLOSED
     }
   }
 
@@ -136,9 +140,12 @@ class Game {
     let data = this.getData(block)
     data.open = true
     if (data.isBomb) {
-      $(block).text(this.symbols.BOMB)
-    } else {
+      block.className = this.symbols.BOMB
+    } else if (data.number > 0) {
+      block.className = `${this.symbols.OPEN} ${this.symbols.OPEN}${data.number}`
       $(block).text(data.number)
+    } else {
+      block.className = this.symbols.EMPTY
     }
   }
 
@@ -153,26 +160,22 @@ class Game {
     for (var i = 0; i < numBombs; i++) {
       this.placeBomb(shuffledBlocks[i])
     };
-    // this.drawGrid()
+
+    this.drawGrid()
   }
 
   // Draw the whole grid. ***** DEBUG ONLY ******
-  // drawGrid() {
-  //   var data;
-  //   var str;
-  //   var x;
-  //   var y;
-  //   for (var block of this.blocks) {
-  //     [x, y] = this.getXY(block)
-  //     data = this.data[x][y]
-  //     if (data.isBomb) {
-  //       str = 'X'
-  //     } else {
-  //       str = data.number
-  //     }
-  //     $(block).text(str)
-  //   }
-  // }
+  drawGrid() {
+    var data,
+        str,
+        x,
+        y;
+    for (var block of this.blocks) {
+      [x, y] = this.getXY(block)
+      data = this.data[x][y]
+      this.reveal(block)
+    }
+  }
 
   placeBomb(bomb) {
     var [x, y] = this.getXY(bomb)
@@ -194,12 +197,12 @@ class Game {
       this.data.push([])
       for (var i = 0; i < this.numColumns; i++) {
         this.data[j].push({isBomb: false, number: 0, open: false})
-        let form = `<li id="${i},${j}"></li>`
+        let form = `<span id="${i},${j}" class="${this.symbols.CLOSED}" aria-hidden="true"></span>`
         form = $(form)
         $('#game').append(form)
       };
     };
-    let blockWidth = $("li").outerWidth(true)
+    let blockWidth = $("#game span").outerWidth(true)
     $('#game').width(this.numColumns*blockWidth)
     $('#game').height(this.numRows*blockWidth)
   }
@@ -211,9 +214,11 @@ class Game {
       return a.innerHTML == b.innerHTML
     }
 
-    for (let li of this.blocks) {
-      let [x, y] = li.id.split(',')
-      this.grid.setItem(x, y, li)
+    let x,
+        y;
+    for (let block of this.blocks) {
+      [x, y] = block.id.split(',')
+      this.grid.setItem(x, y, block)
     }
   }
 

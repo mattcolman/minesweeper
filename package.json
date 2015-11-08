@@ -1,9 +1,10 @@
 {
-  "name": "tic-tac-toe",
+  "name": "minesweeper",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "bootstrap": "^3.3.5",
     "grunt": "^0.4.5",
     "lodash": "^3.10.1"
   },
