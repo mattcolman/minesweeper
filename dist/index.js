@@ -14743,17 +14743,20 @@ var _lodash = require('lodash');
 var _bootstrap = require('bootstrap');
 
 var Game = (function () {
-  function Game(config) {
+  function Game() {
     var _this = this;
+
+    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     _classCallCheck(this, Game);
 
-    this.numRows = 10;
-    this.numColumns = 10;
+    this.numRows = config.numRows || 10;
+    this.numColumns = config.numColumns || 10;
+    this.numBombs = config.numBombs || 10;
 
     this.symbols = {
-      BOMB: 'glyphicon glyphicon-certificate open',
-      FLAG: 'glyphicon glyphicon-flag open',
+      BOMB: 'glyphicon glyphicon-certificate bomb open',
+      FLAG: 'glyphicon glyphicon-flag flag open',
       OPEN: 'open',
       CLOSED: 'closed',
       EMPTY: 'empty'
@@ -14763,9 +14766,10 @@ var Game = (function () {
     this.blocks = Array.from($('#game span')); // convert array-like to array
     this.addGrid();
     this.layBombs();
+    // this.drawGrid()
 
     // disable the context menu
-    $(document).on("contextmenu", "ul", function (e) {
+    $(document).on("contextmenu", "span", function (e) {
       return false;
     });
 
@@ -14787,6 +14791,7 @@ var Game = (function () {
   }
 
   Game.prototype.handleSingleClick = function handleSingleClick(target) {
+    if (target.id == 'game') return;
     var data = this.getData(target);
     if (data.open) return;
 
@@ -14851,14 +14856,14 @@ var Game = (function () {
 
       var _getXY2 = this.getXY(block);
 
-      var _x = _getXY2[0];
+      var _x2 = _getXY2[0];
       var _y = _getXY2[1];
 
-      var data = this.data[_x][_y];
+      var data = this.data[_x2][_y];
       if (data.open == true) continue;
       if (data.number == 0) {
         this.reveal(block);
-        this.cluster(_x, _y);
+        this.cluster(_x2, _y);
       }
     }
 
@@ -14881,14 +14886,14 @@ var Game = (function () {
 
       var _getXY3 = this.getXY(block);
 
-      var _x2 = _getXY3[0];
+      var _x3 = _getXY3[0];
       var _y2 = _getXY3[1];
 
-      var data = this.data[_x2][_y2];
+      var data = this.data[_x3][_y2];
       if (data.open == true) continue;
       this.reveal(block);
       if (data.number == 0) {
-        this.cluster(_x2, _y2);
+        this.cluster(_x3, _y2);
       }
     }
   };
@@ -14929,12 +14934,9 @@ var Game = (function () {
 
   Game.prototype.layBombs = function layBombs() {
     var shuffledBlocks = _lodash._.shuffle(this.blocks);
-    var numBombs = 10;
-    for (var i = 0; i < numBombs; i++) {
+    for (var i = 0; i < this.numBombs; i++) {
       this.placeBomb(shuffledBlocks[i]);
     };
-
-    this.drawGrid();
   };
 
   // Draw the whole grid. ***** DEBUG ONLY ******
@@ -15274,8 +15276,38 @@ exports.Grid = Grid;
 var _game = require('./game');
 
 (function () {
-  var game = new _game.Game();
-  window.Minesweeper = game;
+  var init = function init() {
+    var Difficulty = {
+
+      easy: {
+        numRows: 5,
+        numColumns: 5,
+        numBombs: 5
+      },
+
+      medium: {
+        numRows: 10,
+        numColumns: 10,
+        numBombs: 15
+      },
+
+      hard: {
+        numRows: 15,
+        numColumns: 15,
+        numBombs: 30
+      }
+    };
+
+    var game;
+
+    $('#buttons button').click(function (e) {
+      if (game) game.destroy();
+      game = new _game.Game(Difficulty[e.target.id]);
+      window.Minesweeper = game;
+    });
+  };
+
+  init();
 })();
 
 },{"./game":15}]},{},[17]);

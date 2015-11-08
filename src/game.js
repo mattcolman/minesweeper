@@ -8,13 +8,14 @@ import {Bootstrap} from 'bootstrap';
 
 class Game {
 
-  constructor(config) {
-    this.numRows    = 10
-    this.numColumns = 10
+  constructor(config = {}) {
+    this.numRows    = config.numRows    || 10
+    this.numColumns = config.numColumns || 10
+    this.numBombs   = config.numBombs   || 10
 
     this.symbols = {
-      BOMB: 'glyphicon glyphicon-certificate open',
-      FLAG: 'glyphicon glyphicon-flag open',
+      BOMB: 'glyphicon glyphicon-certificate bomb open',
+      FLAG: 'glyphicon glyphicon-flag flag open',
       OPEN: 'open',
       CLOSED: 'closed',
       EMPTY: 'empty'
@@ -24,9 +25,10 @@ class Game {
     this.blocks = Array.from($('#game span')) // convert array-like to array
     this.addGrid()
     this.layBombs()
+    // this.drawGrid()
 
     // disable the context menu
-    $(document).on("contextmenu", "ul", function(e){
+    $(document).on("contextmenu", "span", function(e){
       return false;
     });
 
@@ -48,6 +50,7 @@ class Game {
   }
 
   handleSingleClick(target) {
+    if (target.id == 'game') return
     let data = this.getData(target)
     if (data.open) return;
     let [x, y] = this.getXY(target)
@@ -156,12 +159,9 @@ class Game {
 
   layBombs() {
     var shuffledBlocks = _.shuffle(this.blocks)
-    var numBombs = 10
-    for (var i = 0; i < numBombs; i++) {
+    for (var i = 0; i < this.numBombs; i++) {
       this.placeBomb(shuffledBlocks[i])
     };
-
-    this.drawGrid()
   }
 
   // Draw the whole grid. ***** DEBUG ONLY ******
