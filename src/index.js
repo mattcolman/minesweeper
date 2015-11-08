@@ -11,7 +11,7 @@ import {Game} from './game';
       easy: {
         numRows: 5,
         numColumns: 5,
-        numBombs: 5
+        numBombs: 4
       },
 
       medium: {

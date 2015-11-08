@@ -60,18 +60,21 @@ h1 {
 
 .open {
   background: #f1f1f1;
-  -moz-box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5);
-  -webkit-box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5);
-  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5);
   color: black;
 }
 
+.hit-bomb {
+  background: #ff0000;
+}
+
 .flag {
+  background: #f1f1f1;
   color: red;
 }
 
 .bomb {
-  color: red;
+  background: #f1f1f1;
+  color: black;
 }
 
 .open1 {
