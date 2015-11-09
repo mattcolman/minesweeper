@@ -102,3 +102,17 @@ h1 {
   color: crimson
 }
 
+ul {
+  width: 120px;
+  margin: 0 auto;
+  display: inline-block;
+  padding-top: 14px;
+}
+
+.hide {
+  display: none;
+}
+.show {
+  display: inherit;
+}
+

@@ -9,6 +9,9 @@ import {Bootstrap} from 'bootstrap';
 class Game {
 
   constructor(config = {}) {
+
+    $('#top-ui')[0].className = 'show'
+
     this.numRows    = config.numRows    || 10
     this.numColumns = config.numColumns || 10
     this.numBombs   = config.numBombs   || 10
@@ -32,7 +35,18 @@ class Game {
     this.addGrid()
     this.layBombs()
     this.addClickListener()
+    this.addTopUI()
     // this.drawGrid()
+  }
+
+  addTopUI() {
+    $('#mine-counter').text(this.numBombs)
+    $('#timer').text(0)
+
+    this.time = 0
+    this.timer = setInterval(()=>{
+      $('#timer').text(++this.time)
+    }, 1000)
   }
 
   createBlocks() {
@@ -90,11 +104,7 @@ class Game {
       }
 
       if (this.allBlocksMarked()) {
-        if (this.checkFlags()) {
-          this.win()
-        } else {
-          this.gameOver()
-        }
+        this.gameOver()
       }
     });
   }
@@ -118,7 +128,7 @@ class Game {
 
   handleRightClick(target) {
     let data = this.getData(target)
-    if (!data.open || data.isFlag) {
+    if ((!data.open || data.isFlag) && this.flags.length < this.numBombs) {
       this.toggleFlag(target)
     }
   }
@@ -147,6 +157,7 @@ class Game {
     if (data.isFlag) {
       block.className = this.symbols.FLAG
       this.flags.push(block)
+      $('#mine-counter').text(this.numBombs-this.flags.length)
     } else {
       block.className = this.symbols.CLOSED
       this.flags = _.without(this.flags, block)
@@ -164,6 +175,7 @@ class Game {
         flag.className = this.symbols.CORRECT_FLAG
       }
     }
+    if (this.flags.length != this.numBombs) correct = false
     return correct;
   }
 
@@ -225,15 +237,24 @@ class Game {
     }
   }
 
-  win() {
+  gameOver() {
+    clearInterval(this.timer)
     $('#game').off()
-    $('#result')[0].className = 'label label-success'
-    $('#result').text('Winning!')
+    if (this.checkFlags()) {
+      this.win()
+    } else {
+      this.lose()
+    }
   }
 
-  gameOver() {
-    console.log("OH NO BOMB!!!!!!!!!!!!")
-    $('#game').off()
+  win() {
+    $('#result')[0].className = 'label label-success'
+    $('#result').text('Winning!')
+    this.score = $('#timer').text()
+  }
+
+  lose() {
+    console.log("OH NO YOU LOSE!!!!!!!!!!!!")
     $('#result')[0].className = 'label label-danger'
     $('#result').text('Sad face :(')
     for (var bomb of this.bombs) {
@@ -243,6 +264,8 @@ class Game {
   }
 
   destroy() {
+    clearInterval(this.timer)
+    $('#top-ui')[0].className = 'hide'
     $('#game').off()
     $('#game').empty()
     $('#result').empty()

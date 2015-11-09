@@ -14748,6 +14748,8 @@ var Game = (function () {
 
     _classCallCheck(this, Game);
 
+    $('#top-ui')[0].className = 'show';
+
     this.numRows = config.numRows || 10;
     this.numColumns = config.numColumns || 10;
     this.numBombs = config.numBombs || 10;
@@ -14771,8 +14773,21 @@ var Game = (function () {
     this.addGrid();
     this.layBombs();
     this.addClickListener();
+    this.addTopUI();
     // this.drawGrid()
   }
+
+  Game.prototype.addTopUI = function addTopUI() {
+    var _this = this;
+
+    $('#mine-counter').text(this.numBombs);
+    $('#timer').text(0);
+
+    this.time = 0;
+    this.timer = setInterval(function () {
+      $('#timer').text(++_this.time);
+    }, 1000);
+  };
 
   Game.prototype.createBlocks = function createBlocks() {
     this.data = [];
@@ -14825,7 +14840,7 @@ var Game = (function () {
   // CLICK LISTENER / HANDLER
 
   Game.prototype.addClickListener = function addClickListener() {
-    var _this = this;
+    var _this2 = this;
 
     // disable the context menu
     $(document).on("contextmenu", "span", function (e) {
@@ -14836,24 +14851,20 @@ var Game = (function () {
       if (e.target.id == 'game') return;
       switch (e.which) {
         case 1:
-          _this.handleSingleClick(e.target);
+          _this2.handleSingleClick(e.target);
           break;
         case 2:
           console.log('Middle Mouse button pressed.');
           break;
         case 3:
-          _this.handleRightClick(e.target);
+          _this2.handleRightClick(e.target);
           break;
         default:
           console.log('You have a strange Mouse!');
       }
 
-      if (_this.allBlocksMarked()) {
-        if (_this.checkFlags()) {
-          _this.win();
-        } else {
-          _this.gameOver();
-        }
+      if (_this2.allBlocksMarked()) {
+        _this2.gameOver();
       }
     });
   };
@@ -14882,7 +14893,7 @@ var Game = (function () {
 
   Game.prototype.handleRightClick = function handleRightClick(target) {
     var data = this.getData(target);
-    if (!data.open || data.isFlag) {
+    if ((!data.open || data.isFlag) && this.flags.length < this.numBombs) {
       this.toggleFlag(target);
     }
   };
@@ -14928,6 +14939,7 @@ var Game = (function () {
     if (data.isFlag) {
       block.className = this.symbols.FLAG;
       this.flags.push(block);
+      $('#mine-counter').text(this.numBombs - this.flags.length);
     } else {
       block.className = this.symbols.CLOSED;
       this.flags = _lodash._.without(this.flags, block);
@@ -14958,6 +14970,7 @@ var Game = (function () {
         flag.className = this.symbols.CORRECT_FLAG;
       }
     }
+    if (this.flags.length != this.numBombs) correct = false;
     return correct;
   };
 
@@ -15079,15 +15092,24 @@ var Game = (function () {
     }
   };
 
-  Game.prototype.win = function win() {
+  Game.prototype.gameOver = function gameOver() {
+    clearInterval(this.timer);
     $('#game').off();
-    $('#result')[0].className = 'label label-success';
-    $('#result').text('Winning!');
+    if (this.checkFlags()) {
+      this.win();
+    } else {
+      this.lose();
+    }
   };
 
-  Game.prototype.gameOver = function gameOver() {
-    console.log("OH NO BOMB!!!!!!!!!!!!");
-    $('#game').off();
+  Game.prototype.win = function win() {
+    $('#result')[0].className = 'label label-success';
+    $('#result').text('Winning!');
+    this.score = $('#timer').text();
+  };
+
+  Game.prototype.lose = function lose() {
+    console.log("OH NO YOU LOSE!!!!!!!!!!!!");
     $('#result')[0].className = 'label label-danger';
     $('#result').text('Sad face :(');
     for (var _iterator8 = this.bombs, _isArray8 = Array.isArray(_iterator8), _i8 = 0, _iterator8 = _isArray8 ? _iterator8 : _iterator8[Symbol.iterator]();;) {
@@ -15110,6 +15132,8 @@ var Game = (function () {
   };
 
   Game.prototype.destroy = function destroy() {
+    clearInterval(this.timer);
+    $('#top-ui')[0].className = 'hide';
     $('#game').off();
     $('#game').empty();
     $('#result').empty();

@@ -15,10 +15,20 @@
           <button type="button" id='hard' class="btn btn-danger">Hard</button>
         </div>
         <div class="main">
-            <h1></h1>
-            <div id="game">
-            </div>
-            <h3><span id="result" class="label label-default"></span></h3>
+
+          <div id='top-ui' class='hide'>
+            <ul class="list-group">
+              <li class="list-group-item list-group-item-info">Mines<span id='mine-counter' class="badge">100</span></li>
+            </ul>
+
+            <ul class="list-group">
+              <li class="list-group-item list-group-item-success">Time<span id='timer' class="badge">100</span></li>
+            </ul>
+          </div>
+
+          <div id="game">
+          </div>
+          <h3><span id="result" class="label label-default"></span></h3>
         </div>
         <footer>View it on <a href="https://github.com/mattcolman/minesweeper">Github</a></footer>
     </body>
